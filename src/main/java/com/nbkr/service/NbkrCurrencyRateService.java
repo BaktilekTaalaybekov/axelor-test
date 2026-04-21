@@ -67,8 +67,7 @@ public class NbkrCurrencyRateService {
           }
           String name = readText(currencyElement, "Name");
           if (name == null || name.trim().isEmpty()) {
-            LOG.warn("NBKR import: skipped currency {} due to empty Name", code);
-            continue;
+            name = code;
           }
 
           int nominal = parseNominal(readText(currencyElement, "Nominal"));
