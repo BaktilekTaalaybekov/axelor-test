@@ -8,6 +8,7 @@
 
   <entity name="CurrencyRate">
     <string name="code" title="Currency Code" required="true" />
+    <string name="name" title="Currency Name" required="true" />
     <integer name="nominal" title="Nominal" required="true" />
     <decimal name="rate" title="Rate" scale="6" precision="18" required="true" />
     <date name="rateDate" title="Rate Date" required="true" />

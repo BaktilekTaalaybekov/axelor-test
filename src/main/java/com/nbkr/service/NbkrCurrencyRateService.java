@@ -16,12 +16,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 public class NbkrCurrencyRateService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(NbkrCurrencyRateService.class);
   private static final String NBKR_DAILY_URL = "https://www.nbkr.kg/XML/daily.xml";
   private static final DateTimeFormatter NBKR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
   private static final DateTimeFormatter ISO_DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
@@ -47,6 +50,7 @@ public class NbkrCurrencyRateService {
 
   private int doImportDailyRates() {
     try {
+      LOG.info("NBKR import started");
       Document document = fetchDocument();
       Element root = document.getDocumentElement();
       LocalDate rateDate = parseRateDate(root.getAttribute("Date"));
@@ -55,30 +59,49 @@ public class NbkrCurrencyRateService {
       int importedCount = 0;
       for (int i = 0; i < currencies.getLength(); i++) {
         Element currencyElement = (Element) currencies.item(i);
+        try {
+          String code = currencyElement.getAttribute("ISOCode");
+          if (code == null || code.trim().isEmpty()) {
+            LOG.warn("NBKR import: skipped currency with empty ISOCode");
+            continue;
+          }
+          String name = readText(currencyElement, "Name");
+          if (name == null || name.trim().isEmpty()) {
+            LOG.warn("NBKR import: skipped currency {} due to empty Name", code);
+            continue;
+          }
 
-        String code = currencyElement.getAttribute("ISOCode");
-        int nominal = parseNominal(readText(currencyElement, "Nominal"));
-        BigDecimal rate = parseRate(readText(currencyElement, "Value"));
+          int nominal = parseNominal(readText(currencyElement, "Nominal"));
+          BigDecimal rate = parseRate(readText(currencyElement, "Value"));
 
-        CurrencyRate existing =
-            currencyRateRepository
-                .all()
-                .filter("self.code = :code AND self.rateDate = :rateDate")
-                .bind("code", code)
-                .bind("rateDate", rateDate)
-                .fetchOne();
+          CurrencyRate existing =
+              currencyRateRepository
+                  .all()
+                  .filter("self.code = :code AND self.rateDate = :rateDate")
+                  .bind("code", code)
+                  .bind("rateDate", rateDate)
+                  .fetchOne();
 
-        CurrencyRate currencyRate = existing != null ? existing : new CurrencyRate();
-        currencyRate.setCode(code);
-        currencyRate.setNominal(nominal);
-        currencyRate.setRate(rate);
-        currencyRate.setRateDate(rateDate);
+          CurrencyRate currencyRate = existing != null ? existing : new CurrencyRate();
+          currencyRate.setCode(code);
+          currencyRate.setName(name.trim());
+          currencyRate.setNominal(nominal);
+          currencyRate.setRate(rate);
+          currencyRate.setRateDate(rateDate);
 
-        currencyRateRepository.save(currencyRate);
-        importedCount++;
+          currencyRateRepository.save(currencyRate);
+          importedCount++;
+        } catch (Exception itemError) {
+          LOG.warn(
+              "NBKR import: failed to process currency node #{}: {}",
+              i,
+              itemError.getMessage());
+        }
       }
+      LOG.info("NBKR import finished for date {}. Updated/created records: {}", rateDate, importedCount);
       return importedCount;
     } catch (Exception e) {
+      LOG.error("NBKR import failed", e);
       throw new RuntimeException("Failed to import NBKR daily rates", e);
     }
   }
@@ -88,6 +111,12 @@ public class NbkrCurrencyRateService {
     connection.setRequestMethod("GET");
     connection.setConnectTimeout(10000);
     connection.setReadTimeout(10000);
+    connection.setRequestProperty("Accept", "application/xml");
+
+    int status = connection.getResponseCode();
+    if (status < 200 || status >= 300) {
+      throw new RuntimeException("NBKR endpoint returned HTTP status: " + status);
+    }
 
     try (InputStream inputStream = connection.getInputStream()) {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

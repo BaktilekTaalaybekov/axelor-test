@@ -1,2 +1,2 @@
 "importId";"active";"name";"job";"cron"
-1;"true";"Import NBKR daily currency rates";"com.nbkr.job.NbkrCurrencyRateJob";"0 0 8 * * ?"
+1;"true";"Import NBKR daily currency rates";"com.nbkr.job.NbkrCurrencyRateJob";"0 0 9 * * ?"
