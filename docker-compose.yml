@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13
+    platform: linux/amd64
+    container_name: axelor-db
+    environment:
+      POSTGRES_DB: axelor
+      POSTGRES_USER: axelor
+      POSTGRES_PASSWORD: axelor
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U axelor -d axelor"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: axelor-app
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "mkdir -p /var/lib/tomcat/webapps && cp /usr/local/share/axelor/ROOT.war /var/lib/tomcat/webapps/ROOT.war && rm -rf /var/lib/tomcat/webapps/ROOT && exec docker-entrypoint.sh start"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/axelor
+      DB_USER: axelor
+      DB_PASSWORD: axelor
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

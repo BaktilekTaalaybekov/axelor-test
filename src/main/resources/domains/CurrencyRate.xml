@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<domain-models
+    xmlns="http://axelor.com/xml/ns/domain-models"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://axelor.com/xml/ns/domain-models http://axelor.com/xml/ns/domain-models/domain-models_7.0.xsd">
+
+  <module name="nbkr" package="com.nbkr.db"/>
+
+  <entity name="CurrencyRate">
+    <string name="code" title="Currency Code" required="true" />
+    <integer name="nominal" title="Nominal" required="true" />
+    <decimal name="rate" title="Rate" scale="6" precision="18" required="true" />
+    <date name="rateDate" title="Rate Date" required="true" />
+  </entity>
+
+</domain-models>

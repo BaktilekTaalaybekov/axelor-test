@@ -1,0 +1,43 @@
+# Gradle
+.gradle/
+build/
+
+# Java / Eclipse
+bin/
+out/
+*.class
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+
+# Local env / secrets
+.env
+.env.*
+*.local
+
+# Logs
+*.log
+
+# Large binaries in repo root (not source; Docker image builds its own WAR)
+ROOT.war
+/*.war
+/*.jar
+
+# Optional reference trees — not needed to build the NBKR module (see README if you add one)
+axelor-development-kit/
+axelor-open-suite/
+
+# Scratch / copied from container for inspection
+docker-entrypoint.sh.base
+
+# Cursor
+.cursor/

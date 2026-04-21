@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<object-views
+    xmlns="http://axelor.com/xml/ns/object-views"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_8.1.xsd">
+
+  <grid name="currency-rate-grid" title="Currency rates" model="com.nbkr.db.CurrencyRate">
+    <field name="rateDate"/>
+    <field name="code"/>
+    <field name="nominal"/>
+    <field name="rate"/>
+  </grid>
+
+  <form name="currency-rate-form" title="Currency rate" model="com.nbkr.db.CurrencyRate">
+    <panel name="mainPanel">
+      <button name="importRatesBtn" title="Import from NBKR" colSpan="12"
+        icon="arrow-repeat" onClick="action-nbkr-import-daily-rates"/>
+      <field name="rateDate"/>
+      <field name="code"/>
+      <field name="nominal"/>
+      <field name="rate"/>
+    </panel>
+  </form>
+
+  <action-view name="nbkr.currency.rate.all" title="NBKR currency rates"
+    model="com.nbkr.db.CurrencyRate">
+    <view type="grid" name="currency-rate-grid"/>
+    <view type="form" name="currency-rate-form"/>
+  </action-view>
+
+  <action-method name="action-nbkr-import-daily-rates">
+    <call class="com.nbkr.service.NbkrCurrencyRateService" method="importDailyRates"/>
+  </action-method>
+
+  <menuitem name="nbkr-root" title="NBKR" parent="menu-admin" order="1800" icon="bank"/>
+  <menuitem name="nbkr-rates" title="Currency rates" parent="nbkr-root"
+    action="nbkr.currency.rate.all" order="100"/>
+  <menuitem name="nbkr-import-rates" title="Import daily rates" parent="nbkr-root"
+    action="action-nbkr-import-daily-rates" order="200"/>
+
+</object-views>
